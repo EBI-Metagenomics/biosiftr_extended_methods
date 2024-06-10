@@ -54,6 +54,16 @@ for num in {1..20}; do (iss generate --draft synth_$num/*.fa --model novaseq --o
 
 ```
 
+The ground truth to benchmark functional prediction power was generated using [EggNOG-mapper](https://github.com/eggnogdb/eggnog-mapper) directly from MetaChick MAGs used to build the synthetic communities.
+
+```bash
+# Generating functional annotation for each MetaChick MAG
+emapper.py -i rep_genome.fa --itype genome --database eggnog/data/eggnog.db --dmnd_db eggnog/data/eggnog_proteins.dmnd --data_dir eggnog/data/ -m diamond --no_file_comments --cpu 16 --dbmem
+
+# Integrating eggnog functions of synthetic communities (emapper evalue threshold = 1E-10)
+synth_functions_integrator.py --eggnog metachick_representative_mags/emapper_results --dataset_type low
+```
+
 ### 2. Taxonomic profile prediction power
 
 We used the MGnify chicken-gut catalogue representative genomes as a reference for mapping. The tools were run with the corresponding parameters and the outputs were processed as described below.
