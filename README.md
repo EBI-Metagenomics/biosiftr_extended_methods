@@ -21,10 +21,23 @@ Leveraging MGnify Genomic Catalogues for Inferring Metabolic Potential in Shallo
 ## Section 1 . Shallow-mapping tool optimisation
 ### 1. Synthetic communities design
 
-To optimise the parameters for [bwamem2]() and [Sourmash]() mapping tools performance in the [MGnify Shallow-mapping tool](), we generated synthetic microbial communities according to the following schema.
+To optimise the parameters for [bwamem2](https://github.com/bwa-mem2/bwa-mem2) and [Sourmash](https://github.com/sourmash-bio/sourmash) mapping tools performance in the [MGnify Shallow-mapping tool](https://github.com/EBI-Metagenomics/shallowmapping), we generated synthetic microbial communities according to the following schema.
 
 <p align="center" width="100%">
    <img src="visuals/synthetic_shallow.png" width="100%"/>
 </p>
+
+[InSilicoSeq](https://github.com/HadrienG/InSilicoSeq) was used to generate each of the synthetic communities from [MetaChic](https://entrepot.recherche.data.gouv.fr/dataset.xhtml?persistentId=doi:10.15454/FHPJH5) chicken-gut genomes catalogue using representative genomes only. The genome contigs were renamed to make easier to track back the synthetic genes origin after mapping
+
+```bash
+# Renaming the contigs of all representatives
+assembly_rename.py rep_genome.fa rep_genome
+
+
+
+```
+
+
+
 
 
