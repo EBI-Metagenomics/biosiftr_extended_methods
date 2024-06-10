@@ -1,6 +1,6 @@
 # shallow_shotgun_paper
-This repo contains the scripts and tables generated to optimise and validate the [MGnify shallowmapping tool](https://github.com/EBI-Metagenomics/shallowmapping). Described in the following publication:
 
+This repo contains the scripts and tables generated to optimise and validate the [MGnify shallowmapping tool](https://github.com/EBI-Metagenomics/shallowmapping) described in the following publication:
 
 // TODO Add publication reference
 
@@ -113,5 +113,26 @@ tree_precrecal.py --dataset low --synth_data synth_$num
 
 ```
 
+
+### 3. Functional annotation benchmark
+
+The optimisation parameters were set up in the MGnify Shallow-mapping pipeline
+
+```bash
+# Integrating functional annotation matrices
+
+/nfs/production/rdf/metagenomics/pipelines/prod/shallowmapping/bin/matrix_integrator.py --input ../ground_truth/kegg_counts.tsv ../mapping_prediction/core/bwa_kos_matrix.tsv ../mapping_prediction/core/sm_kos_matrix.tsv --output core_low_kos.txt
+
+
+# Transforming functions matrix into venn diagrams and heatmaps
+
+/hps/nobackup/rdf/metagenomics/service-team/projects/finding-pheno/shallow_shotgun/ss_scripts/matrix2venn.py --input all_internal_kegg.tsv 
+
+/hps/nobackup/rdf/metagenomics/service-team/projects/finding-pheno/shallow_shotgun/ss_scripts/matrix2heatmap.py --input all_internal_kegg.tsv
+
+/hps/nobackup/rdf/metagenomics/service-team/projects/finding-pheno/shallow_shotgun/ss_scripts/matrix2performance.py --input pan_low_kos.txt --output metrics_pan_low_kos.txt
+
+
+```
 
 
