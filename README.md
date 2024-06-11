@@ -201,8 +201,11 @@ samtools bam2fq -@ 8 -1 sample_1.decont.fq.gz -2 sample_2.decont.fq.gz -0 /dev/n
 
 # HQ and decontaminated reads assembly with SPAdes or MEGAHIT when memory exceeds 200 G
 spades.py --only-assembler --meta --threads 16 --memory 120 -1 sample_1.decont.fq.gz -2 sample_2.decont.fq.gz --continue -o sample
-
 megahit -1 sample_1.decont.fq.gz -2 sample_1.decont.fq.gz -t 16 --out-dir sample
+
+# Filtering out contigs length < 500 bp
+
+
 
 # EggNOG annotation on contigs of length > 500 bp
 emapper.py -i ../assemblies/$prefix/500_contigs.fasta --itype metagenome --database /hps/nobackup/rdf/metagenomics/service-team/ref-dbs/eggnog/data/eggnog.db --dmnd_db /hps/nobackup/rdf/metagenomics/service-team/ref-dbs/eggnog/data/eggnog_proteins.dmnd --data_dir /hps/nobackup/rdf/metagenomics/service-team/ref-dbs/eggnog/data/ -m diamond --no_file_comments --cpu 16 --dbmem -o $prefix\_out
