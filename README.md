@@ -11,7 +11,7 @@ Leveraging MGnify Genomic Catalogues for Inferring Metabolic Potential in Shallo
 </p>
 
 ## Contents
-- [Section 1. Shallow-mapping tool optimisation](#sec1)
+- [Section 1. The shallowmapping tool optimisation](#sec1)
   1. Synthetic communities design
   2. Taxonomic profile prediction power
   3. Functional annotation benchmark
@@ -21,10 +21,10 @@ Leveraging MGnify Genomic Catalogues for Inferring Metabolic Potential in Shallo
 
 
 <a name="sec1"></a>
-## Section 1. Shallow-mapping tool optimisation
+## Section 1. The shallowmapping tool optimisation
 ### 1. Synthetic communities design
 
-To optimise the parameters for [bwamem2](https://github.com/bwa-mem2/bwa-mem2) and [Sourmash](https://github.com/sourmash-bio/sourmash) mapping tools performance in the [MGnify Shallow-mapping tool](https://github.com/EBI-Metagenomics/shallowmapping), we generated synthetic microbial communities according to the following schema.
+To optimise the parameters for [bwamem2](https://github.com/bwa-mem2/bwa-mem2) and [Sourmash](https://github.com/sourmash-bio/sourmash) mapping tools performance in the [MGnify shallowmapping tool](https://github.com/EBI-Metagenomics/shallowmapping), we generated synthetic microbial communities according to the following schema.
 
 <p align="center" width="100%">
    <img src="visuals/synthetic_shallow.png" width="100%"/>
@@ -149,10 +149,96 @@ The Shallow-mapping pipeline was challenged on real data [PRJEB46806](https://ww
    - [Picrust2](https://github.com/picrust/picrust2)
    - [MicFunPred](https://github.com/microDM/MicFunPred)
 - Deep shotgun
-   - Assembly with [SPAdes]() or [Metahit]() and functional annotation with [EggNOG mapper]()
+   - Assembly with [SPAdes](https://github.com/ablab/spades) or [Megahit](https://github.com/voutcn/megahit) and functional annotation with [EggNOG-mapper](https://github.com/eggnogdb/eggnog-mapper)
 - Shallow shotgun (artificially subsampled from deep-shotgun)
    - [SHOGUN](https://github.com/knights-lab/SHOGUN)
-   - [Shallow-mapping pipeline](https://github.com/EBI-Metagenomics/shallowmapping)
+   - [shallowmapping pipeline](https://github.com/EBI-Metagenomics/shallowmapping)
+
+
+The raw-reads of 16S rRNA amplicon were processed using QIIME to generate ASVs...
+
+```bash
+# Code used to generate ASVs, taxonomic labelling, and functions inference from amplicon data
+
+
+# Processing ASVs table to add clean taxonomy labels. Removing GG2 (_[0-9]+) monophyletic identifiers in taxonomic ranks.
+asv2taxo.py --asv_table ASV-table_gg2.tsv --names_table taxonomy.tsv 
+
+# Transform count tables into relative abundance removing singletons. Discarded singletons and doubletons: 16
+counts2relab.py --count_table amplicon_taxo.tsv --output relab_amplicon_taxo.tsv
+
+
+
+
+
+
+
+```
+
+Deep-shotgun raw-reads were filtered by quality, decontaminated, and assembled prior functional annotation. In addition, taxonomic profiles were generated using the mOTUs pipeline.
+
+```bash
+# Deep-shotgun raw-reads quality control (fastp)
+fastp --in1 sample_1.fq.gz --in2 sample_2.fq.gz --out1 sample_1.filt.fq.gz --out2 sample_2.filt.fq.gz --json sample.fastp.json --html sample.fastp.html --thread 6 --detect_adapter_for_pe
+
+
+# Deep-shotgun decontamination of human, phyX and chicken (bwamem2)
+bwa-mem2 mem -M -t 16 hg38.fa sample_1.filt.fq.gz sample_2.filt.fq.gz | \
+samtools view -@ 16 -f 4 -F 256 -uS - | \
+samtools sort -@ 16 -O bam - -o sample_sorted.bam
+samtools bam2fq -@ 8 -1 sample_1.hg38.fq.gz -2 sample_2.hg38.fq.gz -0 /dev/null -s /dev/null -n sample_sorted.bam
+
+bwa-mem2 mem -M -t 16 phiX174.fna sample_1.hg38.fq.gz sample_2.hg38.fq.gz | \
+samtools view -@ 16 -f 4 -F 256 -uS - | \
+samtools sort -@ 16 -O bam - -o sample_sorted.bam
+samtools bam2fq -@ 8 -1 sample_1.phix.fq.gz -2 sample_2.phix.fq.gz -0 /dev/null -s /dev/null -n sample_sorted.bam
+
+bwa-mem2 mem -M -t 16 chicken.fna sample_1.phix.fq.gz sample_2.phix.fq.gz | \
+samtools view -@ 16 -f 4 -F 256 -uS - | \
+samtools sort -@ 16 -O bam - -o sample_sorted.bam
+samtools bam2fq -@ 8 -1 sample_1.decont.fq.gz -2 sample_2.decont.fq.gz -0 /dev/null -s /dev/null -n sample_sorted.bam
+
+
+# HQ and decontaminated reads assembly with SPAdes or MEGAHIT when memory exceeds 200 G
+spades.py --only-assembler --meta --threads 16 --memory 120 -1 sample_1.decont.fq.gz -2 sample_2.decont.fq.gz --continue -o sample
+
+megahit -1 sample_1.decont.fq.gz -2 sample_1.decont.fq.gz -t 16 --out-dir sample
+
+# EggNOG annotation on contigs of length > 500 bp
+emapper.py -i ../assemblies/$prefix/500_contigs.fasta --itype metagenome --database /hps/nobackup/rdf/metagenomics/service-team/ref-dbs/eggnog/data/eggnog.db --dmnd_db /hps/nobackup/rdf/metagenomics/service-team/ref-dbs/eggnog/data/eggnog_proteins.dmnd --data_dir /hps/nobackup/rdf/metagenomics/service-team/ref-dbs/eggnog/data/ -m diamond --no_file_comments --cpu 16 --dbmem -o $prefix\_out
+
+/hps/nobackup/rdf/metagenomics/service-team/projects/finding-pheno/shallow_shotgun/ss_scripts/eggnog2KOs.py --eggnog RJF1502298_out.emapper.annotations --sample RJF1502298
+
+/hps/nobackup/rdf/metagenomics/service-team/projects/finding-pheno/shallow_shotgun/ss_scripts/relab2abspres.py --matrix mixed_vals_kos.tsv --output presabs_kos.tsv
+
+
+
+5. Taxonomic annotation with mOTUs
+### Run prodigal over the assemblies
+sbatch -J $prefix --time=24:00:00 --nodes=1 --mem=8g --output=$prefix.log --wrap="singularity exec $SINGULARITY_CACHEDIR/quay.io-biocontainers-prodigal-2.6.3--hec16e2b_4.img prodigal -c -d $prefix.fna -a $prefix.faa -f gff -i ../assemblies/$prefix/contigs.fasta -o $prefix.gff -p meta"
+
+# mOTUs pipeline
+bsub -J $prefix -n 1 -M 16000 -o $prefix.log nextflow run /nfs/production/rdf/metagenomics/pipelines/prod/motus_pipeline/main.nf --mode paired --paired_end_forward ../decont/$prefix\_1.decont.fq.gz --paired_end_reverse ../decont/$prefix\_2.decont.fq.gz --sample_name $prefix -profile ebi 
+
+
+# Transform mOTUs NCBi to gtdb taxonomy
+/hps/nobackup/rdf/metagenomics/service-team/projects/finding-pheno/shallow_shotgun/ss_scripts/motus2gtdb.py --input RJF1511523_merged.fastq.tsv --mapping ../../motus2gtdb/mOTUs_3.0.0_GTDB_tax.tsv --sample RJF1511523
+
+
+
+# Transform count tables into relative abundance removing singletons. Discarded singletons and doubletons: 127
+counts2relab.py --count_table motus_gtdb.tsv --output relab_motus_taxo.tsv
+
+
+
+
+```
+
+
+
+
+
+
 
 
 
