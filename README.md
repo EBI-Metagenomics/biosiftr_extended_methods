@@ -11,16 +11,17 @@ Leveraging MGnify Genomic Catalogues for Inferring Metabolic Potential in Shallo
 </p>
 
 ## Contents
-- [Section 1 . Shallow-mapping tool optimisation](#sec1)
+- [Section 1. Shallow-mapping tool optimisation](#sec1)
   1. Synthetic communities design
   2. Taxonomic profile prediction power
   3. Functional annotation benchmark
 - [Section 2. Pipeline validation on real data](#sec2)
-  1. Comparative metagenomics of KOs presence/absence
+  1. Results generation
+  2. Comparative metagenomics of KOs presence/absence
 
 
 <a name="sec1"></a>
-## Section 1 . Shallow-mapping tool optimisation
+## Section 1. Shallow-mapping tool optimisation
 ### 1. Synthetic communities design
 
 To optimise the parameters for [bwamem2](https://github.com/bwa-mem2/bwa-mem2) and [Sourmash](https://github.com/sourmash-bio/sourmash) mapping tools performance in the [MGnify Shallow-mapping tool](https://github.com/EBI-Metagenomics/shallowmapping), we generated synthetic microbial communities according to the following schema.
@@ -134,4 +135,32 @@ matrix2performance.py --input integrated_kos.txt --output metrics_kos.txt
 
 ```
 
-The performance metrics table generated in this section is available in the [data](https://github.com/EBI-Metagenomics/shallow_shotgun_paper/tree/main/data/optimisation/function) directory of this repo.
+The concatenated table of performance generated in this section is available in the [data](https://github.com/EBI-Metagenomics/shallow_shotgun_paper/tree/main/data/optimisation/function) directory of this repo.
+
+
+
+<a name="sec2"></a>
+## Section 2. Pipeline validation on real data
+### 1. Results generation
+
+The Shallow-mapping pipeline was challenged on real data [PRJEB46806](https://www.ncbi.nlm.nih.gov/sra?linkname=bioproject_sra_all&from_uid=769364) and results were compared versus other strategies for functional prediction:
+
+- 16S rRNA amplicon
+   - [Picrust2](https://github.com/picrust/picrust2)
+   - [MicFunPred](https://github.com/microDM/MicFunPred)
+- Deep shotgun
+   - Assembly with [SPAdes]() or [Metahit]() and functional annotation with [EggNOG mapper]()
+- Shallow shotgun (artificially subsampled from deep-shotgun)
+   - [SHOGUN](https://github.com/knights-lab/SHOGUN)
+   - [Shallow-mapping pipeline](https://github.com/EBI-Metagenomics/shallowmapping)
+
+
+
+
+
+
+
+
+
+
+
