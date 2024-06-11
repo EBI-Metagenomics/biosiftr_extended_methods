@@ -113,28 +113,25 @@ tree_precrecal.py --dataset low --synth_data synth_$num
 
 ```
 
-Performance metrics tables generated in this section are available in the [data]() directory of this repo. 
+Performance metrics tables generated in this section are available in the [data](https://github.com/EBI-Metagenomics/shallow_shotgun_paper/tree/main/data/optimisation/taxonomy) directory of this repo. 
 
 
 ### 3. Functional annotation benchmark
 
-The optimisation parameters were set up in the MGnify Shallow-mapping pipeline
+The optimisation parameters were set up in the MGnify Shallow-mapping pipeline and the tool was used to generate the functional profiles to benchmark versus the ground truth. Results using `--core_mode true` and `--core_mode false` were generated.
 
 ```bash
-# Integrating functional annotation matrices
+# Running the Shallow-mapping pipeline on the synthetic communities
+nextflow run ebi-metagenomics/shallowmapping --input samplesheet.csv --outdir pan_shallow_results --biome chicken-gut-v1-0-1 --run_bwa true 
 
-/nfs/production/rdf/metagenomics/pipelines/prod/shallowmapping/bin/matrix_integrator.py --input ../ground_truth/kegg_counts.tsv ../mapping_prediction/core/bwa_kos_matrix.tsv ../mapping_prediction/core/sm_kos_matrix.tsv --output core_low_kos.txt
+nextflow run ebi-metagenomics/shallowmapping --input samplesheet.csv --outdir core_shallow_results --biome chicken-gut-v1-0-1 --run_bwa true --core_mode true
 
+# Integrating functional annotation matrices. The following commands were run to integrate Pfam, KOs and KEGG modules annotation.
+matrix_integrator.py --input ground_truth/kegg_counts.tsv pan_shallow_results/integrated_annotation/bwa_kos_matrix.tsv core_shallow_results/integrated_annotation/bwa_kos_matrix.tsv pan_shallow_results/integrated_annotation/sm_kos_matrix.tsv core_shallow_results/integrated_annotation/sm_kos_matrix.tsv --output integrated_kos.txt
 
-# Transforming functions matrix into venn diagrams and heatmaps
-
-/hps/nobackup/rdf/metagenomics/service-team/projects/finding-pheno/shallow_shotgun/ss_scripts/matrix2venn.py --input all_internal_kegg.tsv 
-
-/hps/nobackup/rdf/metagenomics/service-team/projects/finding-pheno/shallow_shotgun/ss_scripts/matrix2heatmap.py --input all_internal_kegg.tsv
-
-/hps/nobackup/rdf/metagenomics/service-team/projects/finding-pheno/shallow_shotgun/ss_scripts/matrix2performance.py --input pan_low_kos.txt --output metrics_pan_low_kos.txt
-
+# Compute performance metrics from functions matrices
+matrix2performance.py --input integrated_kos.txt --output metrics_kos.txt
 
 ```
 
-
+The performance metrics table generated in this section is available in the [data](https://github.com/EBI-Metagenomics/shallow_shotgun_paper/tree/main/data/optimisation/function) directory of this repo.
