@@ -14,7 +14,8 @@ Leveraging MGnify Genomic Catalogues for Inferring Metabolic Potential in Shallo
 - [Section 1. The shallowmapping tool optimisation](#sec1)
   1. Synthetic communities design
   2. Taxonomic profile prediction power
-  3. Functional annotation benchmark
+  3. Generation of pangenome tables
+  4. Functional annotation benchmark
 - [Section 2. Pipeline validation on real data](#sec2)
   1. Functional annotation and comparative metagenomics analysis
   2. Taxonomic annotation
@@ -118,7 +119,11 @@ Performance metrics tables generated in this section are available in the [data/
 /taxonomy/](https://github.com/EBI-Metagenomics/shallow_shotgun_paper/tree/main/data/optimisation/taxonomy) directory of this repo. 
 
 
-### 3. Functional annotation benchmark
+### 3. Generation of pangenome tables
+
+
+
+### 4. Functional annotation benchmark
 
 The optimisation parameters were set up in the MGnify Shallow-mapping pipeline and the tool was used to generate the functional profiles to benchmark versus the ground truth. Results using `--core_mode true` and `--core_mode false` were generated.
 
