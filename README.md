@@ -332,5 +332,5 @@ relab2abspres.py --matrix taxonomy_relab_domain.tsv --output taxonomy_presabs_do
 
 ```
 
-Taxonomy plots were generated using the code available in the [ordination_plots_shallow.ipynb](https://github.com/EBI-Metagenomics/shallow_shotgun_paper/tree/main/notebooks) notebook available in this repository.
+Taxonomy plots were generated using the code in the [ordination_plots_shallow.ipynb](https://github.com/EBI-Metagenomics/shallow_shotgun_paper/tree/main/notebooks) notebook available in this repository.
 
