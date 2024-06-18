@@ -62,7 +62,7 @@ The ground truth to benchmark functional prediction power was generated using [E
 # Generating functional annotation for each MetaChick MAG
 emapper.py -i rep_genome.fa --itype genome --database eggnog/data/eggnog.db --dmnd_db eggnog/data/eggnog_proteins.dmnd --data_dir eggnog/data/ -m diamond --no_file_comments --cpu 16 --dbmem
 
-# Integrating eggnog functions of synthetic communities (emapper evalue threshold = 1E-10)
+# Integrating eggnog functions of synthetic communities (emapper e-value threshold = 1E-10)
 synth_functions_integrator.py --eggnog metachick_representative_mags/emapper_results --dataset_type low
 ```
 
@@ -80,7 +80,7 @@ for num in {1..20}; do (cd synth_$num && bwa-mem2 mem -M -t 8 bwa_reps.fa synth_
 # QC (ani and cov) filtering and processing bwamem2 alignment types
 bam2cov.py --bwa_bam sort_filt_reps.bam --prefix low
 
-# A step to transform genomes relative abundance to species relative abundance. The genomes-all_metadata.tsv file is available at the chicken git catalogue ftp site: https://ftp.ebi.ac.uk/pub/databases/metagenomics/mgnify_genomes/chicken-gut/v1.0.1/genomes-all_metadata.tsv
+# A step to transform genomes' relative abundance to species' relative abundance. The genomes-all_metadata.tsv file is available at the chicken git catalogue ftp site: https://ftp.ebi.ac.uk/pub/databases/metagenomics/mgnify_genomes/chicken-gut/v1.0.1/genomes-all_metadata.tsv
 bwa_genome2species.py --genomes_relab u_relab_1.tsv --metadata genomes-all_metadata.tsv --output low_species_relab.tsv
 
 # Expected vs bwamem2 observed relative abundance
@@ -223,7 +223,7 @@ Deep-shotgun raw-reads were filtered by quality, decontaminated, and assembled p
 # Deep-shotgun raw-reads quality control (fastp)
 fastp --in1 sample_1.fq.gz --in2 sample_2.fq.gz --out1 sample_1.filt.fq.gz --out2 sample_2.filt.fq.gz --json sample.fastp.json --html sample.fastp.html --thread 6 --detect_adapter_for_pe
 
-# Deep-shotgun decontamination of human, phyX and chicken (GCF_016699485.2)
+# Deep-shotgun decontamination of human (GCF_000001405.40), phyX (NC_001422.1) and chicken (GCF_016699485.2)
 bwa-mem2 mem -M -t 16 hg38.fa sample_1.filt.fq.gz sample_2.filt.fq.gz | \
 samtools view -@ 16 -f 4 -F 256 -uS - | \
 samtools sort -@ 16 -O bam - -o sample_sorted.bam
