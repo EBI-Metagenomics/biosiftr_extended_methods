@@ -124,7 +124,7 @@ The optimisation of taxonomic annotation allows the accurate detection of specie
 
 ``` bash
 # Generate the fasta files of genes lacking functional annotation
-pangenomeDB_builder_codon.py \
+pangenomeDB_builder.py \
   --metadata genomes-all_metadata.tsv \
   --mode pre \
   --pfam_dat Pfam-A.hmm.dat.gz
@@ -138,7 +138,7 @@ mv *_out.emapper.annotations emapper_results
 rm *.fasta *.hits *.seed_orthologs
  
 # Parsing the annotation files and generating pre-computed profiles at pangenome level
-pangenomeDB_builder_codon.py \
+pangenomeDB_builder.py \
   --metadata genomes-all_metadata.tsv \
   --mode post \
   --pfam_dat Pfam-A.hmm.dat.gz
