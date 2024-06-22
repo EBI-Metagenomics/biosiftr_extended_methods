@@ -193,7 +193,13 @@ dRep dereplicate -g genomes_dir/* \
    drep_output
 
 # Taxonomic labelling of the representative genomes
-gtdbtk classify_wf --cpus ${cpus} --pplacer_cpus ${pp.cpus} --genome_dir dereplicated_genomes/* --extension fna --skip_ani_screen --out_dir gtdbtk_results
+gtdbtk classify_wf \
+   --cpus ${cpus} \
+   --pplacer_cpus ${pp.cpus} \
+   --genome_dir drep_output/dereplicated_genomes/ \
+   --extension fa \
+   --skip_ani_screen \
+   --out_dir gtdbtk_results
 cat gtdbtk_summary_bac120 gtdbtk_summary_arc53 > gtdbtk.summary.tsv
 
 # Functional annotation of all genomes according to the dRep table drep_output/data_tables/Cdb.csv
