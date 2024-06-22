@@ -204,11 +204,9 @@ cat gtdbtk_summary_bac120 gtdbtk_summary_arc53 > gtdbtk.summary.tsv
 
 # Functional annotation of all genomes according to the dRep table drep_output/data_tables/Cdb.csv
 # Consider that some genomes of genomes_dir could be discarded due to checkM QC
-
 cat Cdb.csv | cut -d',' -f1 | sed '/genome/d;s/\..*//' > catalogue_genomes.list 
-
 for genome in $(cat catalogue_genomes.list); do (
-   prokka $genome.fa \
+   prokka genomes_dir/$genome.fa \
       --cpus ${cpus} \
       --kingdom 'Bacteria' \
       --outdir $genome\_prokka \
