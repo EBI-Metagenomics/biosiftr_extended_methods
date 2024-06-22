@@ -182,7 +182,7 @@ Custom MAG catalogues generated using a minimal version of the [MGnify genomes-c
 # Generate checkM results. Change the expected extension of the assemblies accordingly in the -x flag
 checkm lineage_wf -t ${cpus} -x fa --tab_table genomes_dir checkm_output > checkm_out.tsv
 echo "genome,completeness,contamination,strain_heterogeneity" > checkm_quality.csv
-cat checkm_out.tsv | cut -f1,11,12,13,14 | sed 's/\t0\t/\t/;/Completeness/d;s/\t/,/g' >> checkm_quality.csv
+cat checkm_out.tsv | cut -f1,11,12,13,14 | sed 's/\t0\t/\t/;/Completeness/d;s/\t/,/g;s/,/.fa,/' >> checkm_quality.csv
 
 # Create the representative species clusters
 dRep dereplicate -g genomes_dir/* \
