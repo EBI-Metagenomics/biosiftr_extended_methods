@@ -204,13 +204,18 @@ cat gtdbtk_summary_bac120 gtdbtk_summary_arc53 > gtdbtk.summary.tsv
 
 # Functional annotation of all genomes according to the dRep table drep_output/data_tables/Cdb.csv
 # Consider that some genomes of genomes_dir could be discarded due to checkM QC
-prokka genome.fasta \
-   --cpus ${cpus} \
-   --kingdom 'Bacteria' \
-   --outdir genome_prokka \
-   --prefix genome \
-   --force \
-   --locustag genome
+
+cat Cdb.csv | cut -d',' -f1 | sed '/genome/d;s/\..*//' > catalogue_genomes.list 
+
+for genome in $(cat catalogue_genomes.list); do (
+   prokka $genome.fa \
+      --cpus ${cpus} \
+      --kingdom 'Bacteria' \
+      --outdir $genome\_prokka \
+      --prefix $genome \
+      --force \
+      --locustag $genome
+) done
 
 # Second step of functional annotation on amino acid sequences
 emapper.py -i genome_prokka/genome.faa \
