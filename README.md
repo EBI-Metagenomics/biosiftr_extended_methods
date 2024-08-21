@@ -67,7 +67,10 @@ synth_functions_integrator.py --eggnog metachick_representative_mags/emapper_res
 ```
 
 ### 2. Taxonomic profile prediction power
-We used the MGnify chicken-gut catalogue representative genomes as a reference for mapping. The tools were run with the corresponding parameters and the outputs were processed as described below.
+We used the MGnify chicken-gut catalogue representative genomes as a reference database. Mapping reads generated with bwamem2 were classified as follows:
+- unique: reads mapping to one reference only (no XA tag on bam file)
+- all: unique reads plus all extra matches (every reference on the XA:Z tag having a min of 60% of the read length of exact matches is counted in)
+- best: unique reads plus reads with XA:Z tag. Only the match reported on the third column of the bam file is considered.
 
 ```bash
 ## bwamem2
@@ -77,7 +80,7 @@ bwa-mem2 index -p bwa_reps.fa concat_mgnify_reps.fa
 # Generating bwamem2 alignments
 for num in {1..20}; do (cd synth_$num && bwa-mem2 mem -M -t 8 bwa_reps.fa synth_$num\_R1.fastq.gz synth_$num\_R2.fastq.gz | samtools view -@ 8 -F256 -F4 -uS - | samtools sort -@ 8 -O bam - -o sort_filt_reps.bam && samtools index sort_filt_reps.bam); done
 
-# QC (ani and cov) filtering and processing bwamem2 alignment types
+# QC (ani and cov) filtering and processing bwamem2 alignment types. This script generates results for all, best, and unique mapping reads.
 bam2cov.py --bwa_bam sort_filt_reps.bam --prefix low
 
 # A step to transform genomes' relative abundance to species' relative abundance. The genomes-all_metadata.tsv file is available at the chicken git catalogue ftp site: https://ftp.ebi.ac.uk/pub/databases/metagenomics/mgnify_genomes/chicken-gut/v1.0.1/genomes-all_metadata.tsv
