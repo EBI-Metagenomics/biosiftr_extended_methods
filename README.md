@@ -370,7 +370,7 @@ eggnog2KOs.py --eggnog sample.emapper.annotations --sample sample
 
 ```
 
-We generated shallow-shotgun datasets from the deep-shotgun HQ decontaminated samples having >10 M raw-reads by random subsampling using the [seqtk](https://github.com/lh3/seqtk) tool. A [SHOGUN docker image](https://quay.io/repository/microbiome-informatics/shogun_knights_lab_1.0.8) developed in this work is available on quay.io.
+We generated shallow-shotgun datasets from the deep-shotgun HQ decontaminated samples having >10 M raw-reads by random subsampling using the [seqtk](https://github.com/lh3/seqtk) tool. Then we ran the shallowmapping pipeline and the SHOGUN tool to generate taxonomic and functional profiles. A [SHOGUN docker image](https://quay.io/repository/microbiome-informatics/shogun_knights_lab_1.0.8) developed in this work is available on quay.io.
 
 ```bash
 # Generating artificial shallow-shotgun data (sequencing yields = 100000, 500000, 1000000, 1500000, 2000000)
