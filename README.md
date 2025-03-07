@@ -7,7 +7,7 @@ This repo contains the scripts and tables generated to optimise and validate the
 Leveraging MGnify Genomic Catalogues for Inferring Metabolic Potential in Shallow-Shotgun Sequenced Samples. Alejandra Escobar-Zepeda, Matti Ruuskanen, Martin Beracochea, Lorna Richardson, Robert D. Finn, Leo Lahti.
 
 <p align="center" width="100%">
-   <img src="visuals/abstract.png" width="100%"/>
+   <img src="visuals/visual_abstract_v2.png" width="100%"/>
 </p>
 
 ## Contents
