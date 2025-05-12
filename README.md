@@ -1,6 +1,6 @@
-# shallow_shotgun_paper
+# BioSIFTR methods
 
-This repo contains the scripts and tables generated to optimise and validate the [MGnify shallowmapping tool](https://github.com/EBI-Metagenomics/shallowmapping) described in the following publication:
+This repo contains the scripts and tables generated to optimise and validate the [MGnify BioSIFTR tool](https://github.com/EBI-Metagenomics/biosiftr) described in the following publication:
 
 // TODO Add publication reference
 
@@ -11,7 +11,7 @@ Leveraging MGnify Genomic Catalogues for Inferring Metabolic Potential in Shallo
 </p>
 
 ## Contents
-- [Section 1. The shallowmapping tool optimisation](#sec1)
+- [Section 1. The BioSIFTR tool optimisation](#sec1)
   1. Synthetic communities design
   2. Taxonomic profile prediction power
   3. Generation of pangenome tables
@@ -22,16 +22,16 @@ Leveraging MGnify Genomic Catalogues for Inferring Metabolic Potential in Shallo
 
 
 <a name="sec1"></a>
-## Section 1. The shallowmapping tool optimisation
+## Section 1. The BioSIFTR tool optimisation
 ### 1. Synthetic communities design
 
-To optimise the parameters for [bwamem2](https://github.com/bwa-mem2/bwa-mem2) and [Sourmash](https://github.com/sourmash-bio/sourmash) mapping tools performance in the [MGnify shallowmapping tool](https://github.com/EBI-Metagenomics/shallowmapping), we generated synthetic microbial communities according to the following schema.
+To optimise the parameters for [bwa-mem2](https://github.com/bwa-mem2/bwa-mem2) and [Sourmash](https://github.com/sourmash-bio/sourmash) mapping tools performance in the [MGnify BioSIFTR tool](https://github.com/EBI-Metagenomics/biosiftr), we generated synthetic microbial communities according to the following schema.
 
 <p align="center" width="100%">
    <img src="visuals/synthetic_shallow.png" width="100%"/>
 </p>
 
-[InSilicoSeq](https://github.com/HadrienG/InSilicoSeq) was used to generate each of the synthetic communities from [MetaChic](https://entrepot.recherche.data.gouv.fr/dataset.xhtml?persistentId=doi:10.15454/FHPJH5) chicken-gut genomes catalogue using representative genomes only. The genome contigs were renamed to make it easier to track back the origin of the synthetic reads after mapping
+[InSilicoSeq](https://github.com/HadrienG/InSilicoSeq) was used to generate each of the synthetic communities from [MetaChic](https://entrepot.recherche.data.gouv.fr/dataset.xhtml?persistentId=doi:10.15454/FHPJH5) chicken-gut genomes catalogue using representative genomes only. The genome contigs were renamed to make it easier to trace back the origin of the synthetic reads after mapping. For the human-gut we generated an external catalogue from a mix of isolates, MAGs and SAGs. Accessions are available in the supplementary material of the actual puplication.
 
 ```bash
 # Renaming the contigs of all representatives
@@ -44,7 +44,7 @@ for num in {1..20}; do (cd synth_$num && for genome in $(cat ../known_realpath_g
 cd taxonomy/rich_500
 for num in {1..20}; do (cd synth_$num && for genome in $(cat ../known_realpath_genomes.txt | shuf -n500); do (ln -s $genome .); done); done
 
-# Preparing genomes for functional benchmarking (all genomes in MetaChick catalogue)
+# Preparing genomes for functional benchmarking (all genomes in the external catalogue)
 cd function/rich_50
 for num in {1..20}; do (cd synth_$num && for genome in $(cat ../all_realpath_genomes.txt | shuf -n50); do (ln -s $genome .); done); done
 
@@ -56,7 +56,7 @@ for num in {1..20}; do (iss generate --draft synth_$num/*.fa --model novaseq --o
 
 ```
 
-The ground truth to benchmark functional prediction power was generated using [EggNOG-mapper](https://github.com/eggnogdb/eggnog-mapper) directly from MetaChick MAGs used to build the synthetic communities.
+The ground truth to benchmark the functional prediction power was generated using [EggNOG-mapper](https://github.com/eggnogdb/eggnog-mapper) directly from the external catalogue of MAGs used to build the synthetic communities.
 
 ```bash
 # Generating functional annotation for each MetaChick MAG
@@ -123,7 +123,7 @@ Performance metrics tables generated in this section are available in the [data/
 
 ### 3. Generation of pangenome tables
 
-The optimisation of taxonomic annotation allows the accurate detection of species clusters in the MGnify genomes catalogue. Functional inference in the shallowmapping pipeline is made through the annotation transference of the pangenome (or core genes). Tables of functions are generated from the tables available in the FTP site of the [MGnify genome catalogues](https://www.ebi.ac.uk/metagenomics/browse/genomes). This can be done by downloading the catalogue and then processing the files locally. The commands below were used in the local copy of the catalogue at the EBI cluster Codon. KEGG modules completeness tables were computed using the [kegg-pathways-completeness-tool](https://github.com/EBI-Metagenomics/kegg-pathways-completeness-tool).
+The optimisation of taxonomic annotation allows the accurate detection of species clusters in the MGnify genomes catalogue. Functional inference in the BioSIFTR pipeline is made through the annotation transference of the pangenome (or core genes). Tables of functions are generated from the tables available in the FTP site of the [MGnify genome catalogues](https://www.ebi.ac.uk/metagenomics/browse/genomes). This can be done by downloading the catalogue and then processing the files locally. The commands below were used in the local copy of the catalogue at the EBI cluster Codon. KEGG modules completeness tables were computed using the [kegg-pathways-completeness-tool](https://github.com/EBI-Metagenomics/kegg-pathways-completeness-tool).
 
 ``` bash
 # Generate the fasta files of genes lacking functional annotation
@@ -135,9 +135,9 @@ pangenomeDB_builder.py \
 # Launching the eggNOG annotation tool
 for genome in $(ls *.fasta | sed 's/_accessory.fasta//'); do (emapper.py -i $genome\_accessory.fasta --itype CDS --translate --database eggnog/data/eggnog.db --dmnd_db data/eggnog_proteins.dmnd --data_dir eggnog/data/ -m diamond --no_file_comments --cpu 16 --dbmem -o $genome\_out); done
   
-# Once all annotations have been completed successfully, move annotation results into the emapper results directory and remove the intermediate files.
+# Once all annotations have been completed successfully, move the annotation results into the emapper results directory and remove the intermediate files.
 mkdir emapper_results
-mv *_out.emapper.annotations emapper_results
+mv *_out.emapper.annotations emapper_results1
 rm *.fasta *.hits *.seed_orthologs
  
 # Parsing the annotation files and generating pre-computed profiles at pangenome level
@@ -171,7 +171,7 @@ rm *.log *.txt *.kegg_pathways.tsv *.kegg_contigs.tsv
 Pangenome tables generated by MGnify team are available in the FTP site of the corresponding MGnify genomes catalogue.
 
 #### 3.1. Processing custom genome catalogues
-Custom MAG catalogues generated using a minimal version of the [MGnify genomes-catalogue-pipeline](https://github.com/EBI-Metagenomics/genomes-catalogue-pipeline) can be used to build Shallowmapping databases. The starting point is to have in the same directory (`genomes_dir`) the fasta files of the genomes to be included in the catalogue. You will need to install the following tools locally. We recommend using the publicly available docker images:
+Custom MAG catalogues generated using a minimal version of the [MGnify genomes-catalogue-pipeline](https://github.com/EBI-Metagenomics/genomes-catalogue-pipeline) can be used to build bioSIFTR databases. The starting point is to have in the same directory (`genomes_dir`) the fasta files of the genomes to be included in the catalogue. You will need to install the following tools locally. We recommend using the publicly available docker images:
 
 - [CheckM v1.2.2](https://github.com/Ecogenomics/CheckM)
 - [dRep v3.4.2](https://github.com/MrOlm/drep)
@@ -261,7 +261,7 @@ mkdir panaroo_results
 mv *_panaroo panaroo_results
 rm -r rep_*
 
-# Computing the pangenome tables for the shallowmapping pipeline
+# Computing the pangenome tables for the BioSIFTR pipeline
 pangenomeDB_builder_custom.py \
    --drep_clstrs drep_output/data_tables/Cdb.csv \
    --derep_genomes drep_output/dereplicated_genomes/ \
@@ -285,13 +285,13 @@ bwa-mem2 index bwa_reps.fna
 
 
 ### 4. Functional annotation benchmark
-The optimisation parameters were set up in the MGnify shallowmapping pipeline and the tool was used to generate the functional profiles to benchmark versus the ground truth. Results using `--core_mode true` and `--core_mode false` were generated.
+The optimisation parameters were set up in the MGnify BioSIFTR pipeline, and the tool was used to generate the functional profiles to benchmark against the ground truth. Results were generated using `-core_mode true` and `--core_mode false`.
 
 ```bash
-# Running the shallowmapping pipeline on the synthetic communities
-nextflow run ebi-metagenomics/shallowmapping --input samplesheet.csv --outdir pan_shallow_results --biome chicken-gut-v1-0-1 --run_bwa true 
+# Running the BioSIFTR pipeline on the synthetic communities
+nextflow run ebi-metagenomics/biosiftr --input samplesheet.csv --outdir pan_shallow_results --biome chicken-gut-v1-0-1 --run_bwa true 
 
-nextflow run ebi-metagenomics/shallowmapping --input samplesheet.csv --outdir core_shallow_results --biome chicken-gut-v1-0-1 --run_bwa true --core_mode true
+nextflow run ebi-metagenomics/biosiftr --input samplesheet.csv --outdir core_shallow_results --biome chicken-gut-v1-0-1 --run_bwa true --core_mode true
 
 # Integrating functional annotation matrices. The following commands were run to integrate Pfam, KOs and KEGG modules annotation.
 matrix_integrator.py --input ground_truth/kegg_counts.tsv pan_shallow_results/integrated_annotation/bwa_kos_matrix.tsv core_shallow_results/integrated_annotation/bwa_kos_matrix.tsv pan_shallow_results/integrated_annotation/sm_kos_matrix.tsv core_shallow_results/integrated_annotation/sm_kos_matrix.tsv --output integrated_kos.txt
@@ -308,7 +308,7 @@ The concatenated table of performance generated in this section is available in 
 
 <a name="sec2"></a>
 ## Section 2. Pipeline validation on real data
-The Shallowmapping pipeline was challenged on real data [PRJEB46806](https://www.ncbi.nlm.nih.gov/sra?linkname=bioproject_sra_all&from_uid=769364) and results were compared versus other strategies for functional prediction:
+The BioSIFTR pipeline was challenged on real data [PRJEB46806](https://www.ncbi.nlm.nih.gov/sra?linkname=bioproject_sra_all&from_uid=769364) and results were compared versus other strategies for functional prediction:
 
 - 16S rRNA amplicon
    - [Picrust2](https://github.com/picrust/picrust2)
@@ -317,7 +317,7 @@ The Shallowmapping pipeline was challenged on real data [PRJEB46806](https://www
    - Assembly with [SPAdes](https://github.com/ablab/spades) or [Megahit](https://github.com/voutcn/megahit) and functional annotation with [EggNOG-mapper](https://github.com/eggnogdb/eggnog-mapper)
 - Shallow-shotgun (artificially subsampled from deep-shotgun)
    - [SHOGUN](https://github.com/knights-lab/SHOGUN)
-   - [shallowmapping pipeline](https://github.com/EBI-Metagenomics/shallowmapping)
+   - [BioSIFTR pipeline](https://github.com/EBI-Metagenomics/biosiftr)
 
 <p align="center" width="100%">
    <img src="visuals/validation.png" width="100%"/>
@@ -370,7 +370,7 @@ eggnog2KOs.py --eggnog sample.emapper.annotations --sample sample
 
 ```
 
-We generated shallow-shotgun datasets from the deep-shotgun HQ decontaminated samples having >10 M raw-reads by random subsampling using the [seqtk](https://github.com/lh3/seqtk) tool. Then we ran the shallowmapping pipeline and the SHOGUN tool to generate taxonomic and functional profiles. A [SHOGUN docker image](https://quay.io/repository/microbiome-informatics/shogun_knights_lab_1.0.8) developed in this work is available on quay.io.
+We generated shallow-shotgun datasets from the deep-shotgun HQ decontaminated samples having >10 M raw-reads by random subsampling using the [seqtk](https://github.com/lh3/seqtk) tool. Then we ran the BioSIFTR pipeline and the SHOGUN tool to generate taxonomic and functional profiles. A [SHOGUN docker image](https://quay.io/repository/microbiome-informatics/shogun_knights_lab_1.0.8) developed in this work is available on quay.io.
 
 ```bash
 # Generating artificial shallow-shotgun data (sequencing yields = 100000, 500000, 1000000, 1500000, 2000000)
@@ -378,8 +378,8 @@ SEED=$(shuf -i 0-999 -n 1)
 seqtk sample -s $SEED sample_1.decont.fq.gz 100000 > sample_100000_1.fq
 seqtk sample -s $SEED sample_2.decont.fq.gz 100000 > sample_100000_2.fq
 
-# Running the shallowmapping pipeline
-nextflow run ebi-metagenomics/shallowmapping --input samplesheet.csv --outdir junglefowl_results --biome chicken-gut-v1-0-1 --run_bwa true
+# Running the BioSIFTR pipeline
+nextflow run ebi-metagenomics/biosiftr --input samplesheet.csv --outdir junglefowl_results --biome chicken-gut-v1-0-1 --run_bwa true
 
 # Running SHOGUN. Requires to transform fastq to fasta, fix read names and concatenate the reads
 fq2fa.py sample_100000_1.fq.gz sample_100000_R1
@@ -425,7 +425,7 @@ motus2gtdb.py --input sample_merged.fastq.tsv --mapping mOTUs_3.0.0_GTDB_tax.tsv
 # Transform mOTUs count tables into relative abundance removing singletons. Discarded singletons and doubletons: 127
 counts2relab.py --count_table motus_gtdb.tsv --output relab_motus_taxo.tsv
 
-# Shallow-shotgun data. From shallowmapping results
+# Shallow-shotgun data. From BioSIFTR results
 # Aggregating shallow_mapping results at species level
 shallow2aggr.py --taxonomy_table sm_taxo_matrix.tsv
 shallow2aggr.py --taxonomy_table bwa_taxo_matrix.tsv
@@ -448,5 +448,5 @@ relab2abspres.py --matrix taxonomy_relab_domain.tsv --output taxonomy_presabs_do
 
 ```
 
-Taxonomy plots were generated using the code in the [ordination_plots_shallow.ipynb](https://github.com/EBI-Metagenomics/shallow_shotgun_paper/tree/main/notebooks) notebook available in this repository.
+Taxonomy plots were generated using the code in the [ordination_plots_shallow.ipynb](https://github.com/EBI-Metagenomics/biosiftr_extended_methods/tree/main/notebooks) notebook available in this repository.
 
