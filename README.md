@@ -2,9 +2,7 @@
 
 This repo contains the scripts and tables generated to optimise and validate the [MGnify BioSIFTR tool](https://github.com/EBI-Metagenomics/biosiftr) described in the following publication:
 
-// TODO Add publication reference
-
-Leveraging MGnify Genomic Catalogues for Inferring Metabolic Potential in Shallow-Shotgun Sequenced Samples. Alejandra Escobar-Zepeda, Matti Ruuskanen, Martin Beracochea, Lorna Richardson, Robert D. Finn, Leo Lahti.
+Biome-specific genome catalogues reveal functional potential of shallow sequencing. Alejandra Escobar-Zepeda, Matti O. Ruuskanen, Martin Beracochea, Jennifer Lu, Dattatray Mongad, Lorna Richardson, Robert D. Finn, Leo Lahti
 
 <p align="center" width="100%">
    <img src="visuals/visual_abstract_v2.png" width="100%"/>
@@ -25,13 +23,13 @@ Leveraging MGnify Genomic Catalogues for Inferring Metabolic Potential in Shallo
 ## Section 1. The BioSIFTR tool optimisation
 ### 1. Synthetic communities design
 
-To optimise the parameters for [bwa-mem2](https://github.com/bwa-mem2/bwa-mem2) and [Sourmash](https://github.com/sourmash-bio/sourmash) mapping tools performance in the [MGnify BioSIFTR tool](https://github.com/EBI-Metagenomics/biosiftr), we generated synthetic microbial communities according to the following schema.
+To optimise the parameters for [bwa-mem2](https://github.com/bwa-mem2/bwa-mem2) and [Sourmash](https://github.com/sourmash-bio/sourmash) mapping tools' performance in the [MGnify BioSIFTR tool](https://github.com/EBI-Metagenomics/biosiftr), we generated synthetic microbial communities according to the following schema.
 
 <p align="center" width="100%">
    <img src="visuals/synthetic_shallow.png" width="100%"/>
 </p>
 
-[InSilicoSeq](https://github.com/HadrienG/InSilicoSeq) was used to generate each of the synthetic communities from [MetaChic](https://entrepot.recherche.data.gouv.fr/dataset.xhtml?persistentId=doi:10.15454/FHPJH5) chicken-gut genomes catalogue using representative genomes only. The genome contigs were renamed to make it easier to trace back the origin of the synthetic reads after mapping. For the human-gut we generated an external catalogue from a mix of isolates, MAGs and SAGs. Accessions are available in the supplementary material of the actual puplication.
+[InSilicoSeq](https://github.com/HadrienG/InSilicoSeq) was used to generate each of the synthetic communities from [MetaChic](https://entrepot.recherche.data.gouv.fr/dataset.xhtml?persistentId=doi:10.15454/FHPJH5) chicken-gut genomes catalogue using representative genomes only. The genome contigs were renamed to make it easier to trace back the origin of the synthetic reads after mapping. For the human-gut, we generated an external catalogue from a mix of isolates, MAGs and SAGs. Accessions are available in the supplementary material of the actual publication.
 
 ```bash
 # Renaming the contigs of all representatives
@@ -51,7 +49,7 @@ for num in {1..20}; do (cd synth_$num && for genome in $(cat ../all_realpath_gen
 cd function/rich_500
 for num in {1..20}; do (cd synth_$num && for genome in $(cat ../all_realpath_genomes.txt | shuf -n500); do (ln -s $genome .); done); done
 
-# Generating shallow-shotgun raw-reads
+# Generating shallow-shotgun raw reads
 for num in {1..20}; do (iss generate --draft synth_$num/*.fa --model novaseq --output raw_reads/synth_$num --cpus 4 --n_reads 2M --compress); done
 
 ```
@@ -68,9 +66,9 @@ synth_functions_integrator.py --eggnog metachick_representative_mags/emapper_res
 
 ### 2. Taxonomic profile prediction power
 We used the MGnify chicken-gut catalogue representative genomes as a reference database. Mapping reads generated with bwamem2 were classified as follows:
-- unique: reads mapping to one reference only (no XA tag on bam file)
-- all: unique reads plus all extra matches (every reference on the XA:Z tag having a min of 60% of the read length of exact matches is counted in)
-- best: unique reads plus reads with XA:Z tag. Only the match reported on the third column of the bam file is considered.
+- unique: reads mapping to one reference only (no XA tag on the bam file)
+- all: unique reads plus all extra matches (every reference on the XA:Z tag having a minimum of 60% of the read length of exact matches is counted in)
+- best: unique reads plus reads with XA:Z tag. Only the match reported in the third column of the BAM file is considered.
 
 ```bash
 ## bwamem2
@@ -80,7 +78,7 @@ bwa-mem2 index -p bwa_reps.fa concat_mgnify_reps.fa
 # Generating bwamem2 alignments
 for num in {1..20}; do (cd synth_$num && bwa-mem2 mem -M -t 8 bwa_reps.fa synth_$num\_R1.fastq.gz synth_$num\_R2.fastq.gz | samtools view -@ 8 -F256 -F4 -uS - | samtools sort -@ 8 -O bam - -o sort_filt_reps.bam && samtools index sort_filt_reps.bam); done
 
-# QC (ani and cov) filtering and processing bwamem2 alignment types. This script generates results for all, best, and unique mapping reads.
+# QC (ani and cov) filtering and processing bwa-mem2 alignment types. This script generates results for all, best, and unique mapping reads.
 bam2cov.py --bwa_bam sort_filt_reps.bam --prefix low
 
 # A step to transform genomes' relative abundance to species' relative abundance. The genomes-all_metadata.tsv file is available at the chicken git catalogue ftp site: https://ftp.ebi.ac.uk/pub/databases/metagenomics/mgnify_genomes/chicken-gut/v1.0.1/genomes-all_metadata.tsv
@@ -140,7 +138,7 @@ mkdir emapper_results
 mv *_out.emapper.annotations emapper_results1
 rm *.fasta *.hits *.seed_orthologs
  
-# Parsing the annotation files and generating pre-computed profiles at pangenome level
+# Parsing the annotation files and generating pre-computed profiles at the pangenome level
 pangenomeDB_builder.py \
   --metadata genomes-all_metadata.tsv \
   --mode post \
@@ -171,7 +169,7 @@ rm *.log *.txt *.kegg_pathways.tsv *.kegg_contigs.tsv
 Pangenome tables generated by MGnify team are available in the FTP site of the corresponding MGnify genomes catalogue.
 
 #### 3.1. Processing custom genome catalogues
-Custom MAG catalogues generated using a minimal version of the [MGnify genomes-catalogue-pipeline](https://github.com/EBI-Metagenomics/genomes-catalogue-pipeline) can be used to build bioSIFTR databases. The starting point is to have in the same directory (`genomes_dir`) the fasta files of the genomes to be included in the catalogue. You will need to install the following tools locally. We recommend using the publicly available docker images:
+Custom MAG catalogues generated using a minimal version of the [MGnify genomes-catalogue-pipeline](https://github.com/EBI-Metagenomics/genomes-catalogue-pipeline) can be used to build bioSIFTR databases. The starting point is to have in the same directory (`genomes_dir`) the fasta files of the genomes to be included in the catalogue. You will need to install the following tools locally. We recommend using the publicly available Docker images:
 
 - [CheckM v1.2.2](https://github.com/Ecogenomics/CheckM)
 - [dRep v3.4.2](https://github.com/MrOlm/drep)
@@ -206,7 +204,7 @@ gtdbtk classify_wf \
 cat gtdbtk_summary_bac120 gtdbtk_summary_arc53 > gtdbtk.summary.tsv
 
 # Functional annotation of all genomes according to the dRep table drep_output/data_tables/Cdb.csv
-# Consider that some genomes of genomes_dir could be discarded due to checkM QC
+# Consider that some genomes in genomes_dir could be discarded due to checkM QC
 cat Cdb.csv | cut -d',' -f1 | sed '/genome/d;s/\..*//' > catalogue_genomes.list 
 for genome in $(cat catalogue_genomes.list); do (
    prokka genomes_dir/$genome.fa \
@@ -236,7 +234,7 @@ for genome in $(cat catalogue_genomes.list); do (
    mv prokka_results/$genome\_prokka/$genome.gff gff_files
 ); done
 
-# Creating the directories structure to run Panaroo
+# Creating the directory structure to run Panaroo
 panaroo_inputs_builder_custom.py \
    --drep_clstrs drep_output/data_tables/Cdb.csv \
    --gff_files ./gff_files \
@@ -308,7 +306,8 @@ The concatenated table of performance generated in this section is available in 
 
 <a name="sec2"></a>
 ## Section 2. Pipeline validation on real data
-The BioSIFTR pipeline was challenged on real data [PRJEB46806](https://www.ncbi.nlm.nih.gov/sra?linkname=bioproject_sra_all&from_uid=769364) and results were compared versus other strategies for functional prediction:
+The BioSIFTR pipeline was challenged on three different gut biomes of real data: human ([PRJDB11444](https://www.ebi.ac.uk/ena/browser/view/PRJDB11444)), mouse ([PRJEB74255](https://www.ebi.ac.uk/ena/browser/view/PRJEB74255)), and junglefowl ([PRJEB46806](https://www.ebi.ac.uk/ena/browser/view/PRJEB46806)). 
+Results were compared with other strategies for functional prediction:
 
 - 16S rRNA amplicon
    - [Picrust2](https://github.com/picrust/picrust2)
@@ -325,15 +324,15 @@ The BioSIFTR pipeline was challenged on real data [PRJEB46806](https://www.ncbi.
 
 
 ### 1. Functional annotation and comparative metagenomics analysis
-The raw-reads of 16S rRNA amplicon were processed using QIIME to generate ASVs...
+The raw reads of 16S rRNA amplicon were processed using QIIME to generate ASVs...
 
 ```bash
-# Code used to generate ASVs, taxonomic labelling, and functions inference from amplicon data
+# Code used to generate ASVs, taxonomic labelling, and function inference from amplicon data
 
 
 ```
 
-Deep-shotgun raw-reads were filtered by quality, decontaminated, and assembled prior functional annotation.
+Deep-shotgun raw reads were filtered by quality, decontaminated, and assembled before functional annotation.
 
 ```bash
 # Deep-shotgun raw-reads quality control (fastp)
@@ -370,7 +369,7 @@ eggnog2KOs.py --eggnog sample.emapper.annotations --sample sample
 
 ```
 
-We generated shallow-shotgun datasets from the deep-shotgun HQ decontaminated samples having >10 M raw-reads by random subsampling using the [seqtk](https://github.com/lh3/seqtk) tool. Then we ran the BioSIFTR pipeline and the SHOGUN tool to generate taxonomic and functional profiles. A [SHOGUN docker image](https://quay.io/repository/microbiome-informatics/shogun_knights_lab_1.0.8) developed in this work is available on quay.io.
+We generated shallow-shotgun datasets from the deep-shotgun HQ decontaminated samples having >10 M raw reads by random subsampling using the [seqtk](https://github.com/lh3/seqtk) tool. Then we ran the BioSIFTR pipeline and the SHOGUN tool to generate taxonomic and functional profiles. A [SHOGUN docker image](https://quay.io/repository/microbiome-informatics/shogun_knights_lab_1.0.8) developed in this work is available on quay.io.
 
 ```bash
 # Generating artificial shallow-shotgun data (sequencing yields = 100000, 500000, 1000000, 1500000, 2000000)
@@ -381,7 +380,7 @@ seqtk sample -s $SEED sample_2.decont.fq.gz 100000 > sample_100000_2.fq
 # Running the BioSIFTR pipeline
 nextflow run ebi-metagenomics/biosiftr --input samplesheet.csv --outdir junglefowl_results --biome chicken-gut-v1-0-1 --run_bwa true
 
-# Running SHOGUN. Requires to transform fastq to fasta, fix read names and concatenate the reads
+# Running SHOGUN. Requires transforming fastq to fasta, fixing read names and concatenating the reads
 fq2fa.py sample_100000_1.fq.gz sample_100000_R1
 cat sample_100000_R1.fasta | sed 's/_/sub/;s/_/|/;s/_//g;s/|/_/' > sample_100000.fasta 
 cat sample_100000_R2.fasta | sed 's/_/sub/;s/_/|/;s/_//g;s/|/_/' >> sample_100000.fasta 
@@ -390,7 +389,7 @@ shogun pipeline --input sample_100000.fasta --database shogun/databases/ --outpu
 
 ```
 
-Functional tables generated by the different methods were integrated and a comparative metagenomics analysis was performed in R using the [ordination_plots_shallow.ipynb](https://github.com/EBI-Metagenomics/shallow_shotgun_paper/tree/main/notebooks) notebook available in this repository.
+Functional tables generated by the different methods were integrated, and a comparative metagenomics analysis was performed in R using the [ordination_plots_shallow.ipynb](https://github.com/EBI-Metagenomics/shallow_shotgun_paper/tree/main/notebooks) notebook available in this repository.
 
 ```bash
 matrix_integrator.py --input picrust2.tsv micfunpred.tsv deep.tsv shallow.tsv shogun.tsv --output mixed_vals_kos.tsv
@@ -413,16 +412,16 @@ Taxonomic profiles were generated from the deep-shotgun HQ decontaminated reads 
 # Processing ASVs table to add clean taxonomy labels. Removing GG2 (_[0-9]+) monophyletic identifiers in taxonomic ranks and aggregating names
 asv2taxo.py --asv_table ASV-table_gg2.tsv --names_table taxonomy.tsv 
 
-# Transform amplicon count tables into relative abundance removing singletons. Discarded singletons and doubletons: 16
+# Transform amplicon count tables into relative abundance, removing singletons. Discarded singletons and doubletons: 16
 counts2relab.py --count_table amplicon_taxo.tsv --output relab_amplicon_taxo.tsv
 
-# Deep-shotgun data. Taxonomic annotation with mOTUs pipeline
+# Deep-shotgun data. Taxonomic annotation with the mOTUs pipeline
 nextflow run motus_pipeline/main.nf --mode paired --paired_end_forward sample_1.decont.fq.gz --paired_end_reverse sample_2.decont.fq.gz --sample_name sample 
 
 # Transform mOTUs NCBI labels into GTDB taxonomy
 motus2gtdb.py --input sample_merged.fastq.tsv --mapping mOTUs_3.0.0_GTDB_tax.tsv --sample sample
 
-# Transform mOTUs count tables into relative abundance removing singletons. Discarded singletons and doubletons: 127
+# Transform the mOTUs count tables into relative abundance, removing singletons. Discarded singletons and doubletons: 127
 counts2relab.py --count_table motus_gtdb.tsv --output relab_motus_taxo.tsv
 
 # Shallow-shotgun data. From BioSIFTR results
@@ -448,5 +447,5 @@ relab2abspres.py --matrix taxonomy_relab_domain.tsv --output taxonomy_presabs_do
 
 ```
 
-Taxonomy plots were generated using the code in the [ordination_plots_shallow.ipynb](https://github.com/EBI-Metagenomics/biosiftr_extended_methods/tree/main/notebooks) notebook available in this repository.
+Ordination plots and other comparative metagenomics analysis were computed in R using the code in the [ordination_plots_biosiftr.ipynb](https://github.com/EBI-Metagenomics/biosiftr_extended_methods/tree/main/notebooks) notebook available in this repository.
 
