@@ -324,11 +324,63 @@ Results were compared with other strategies for functional prediction:
 
 
 ### 1. Functional annotation and comparative metagenomics analysis
-The raw reads of 16S rRNA amplicon were processed using QIIME to generate ASVs...
+The raw reads of 16S rRNA amplicon were processed using QIIME to generate ASVs and PICRUSt2 and MicFunPred were used to generate the functional profiles.
+This is an example for one of the three data sets (Red junglefowl; accession PRJEB46806). The code used for the two data sets is identical, except for the accession numbers (PRJDB11444, PRJEB74255) and the options "--p-trunc-len-f" and "--p-trunc-len-r" in the denoising step.
 
 ```bash
-# Code used to generate ASVs, taxonomic labelling, and function inference from amplicon data
+# Code used to generate ASVs, taxonomic labelling, and function inference from PRJEB46806 amplicon data
+#The filereport "filereport_read_run_PRJEB46806_tsv.txt" should be downloaded from https://www.ebi.ac.uk/ena/browser/view/PRJEB46806?show=reads
+grep "MiSeq" "filereport_read_run_PRJEB46806_tsv.txt" | awk '{print $11}' | awk -v RS=';' 1 > PRJEB46806_files.txt
+wget -i PRJEB46806_files.txt
+ls *.fq.gz | awk -F '_' '{print $1}' | sort | uniq | awk -v pwd="$PWD" -v c="/" -v OFS="\t" '{print $1, pwd c $1 "_16S_R1.fq.gz", pwd c $1 "_16S_R2.fq.gz"}' > PRJEB46806_manifest.txt
+sed -i '1s/^/sample-id\tforward-absolute-filepath\treverse-absolute-filepath\n/' PRJEB46806_manifest.txt
 
+#all files are phred-33 coded
+
+#Import data as a Qiime2 artifact
+qiime tools import \
+  --type 'SampleData[PairedEndSequencesWithQuality]' \
+  --input-path PRJEB46806_manifest.txt \
+  --output-path paired-end-demux.qza \
+  --input-format PairedEndFastqManifestPhred33V2
+
+#Check sequence quality for trimming
+qiime demux summarize \
+  --i-data paired-end-demux.qza \
+  --o-visualization demux.qzv
+
+#Denoise to ASVs with dada2
+qiime dada2 denoise-paired \
+  --i-demultiplexed-seqs paired-end-demux.qza \
+  --p-trunc-len-f 230 \
+  --p-trunc-len-r 230 \
+  --p-min-overlap 20 \
+  --p-pooling-method pseudo \
+  --p-n-threads 8 \
+  --o-table table.qza \
+  --o-representative-sequences rep-seqs.qza \
+  --o-denoising-stats denoising-stats.qza
+
+#Export ASV-table to tab-delimited format
+qiime tools export \
+  --input-path table.qza \
+  --output-path qiime_exports
+
+biom convert -i qiime_exports/feature-table.biom -o qiime_exports/ASV-table.tsv --to-tsv
+
+#Export representative sequences
+qiime tools export \
+  --input-path rep-seqs.qza \
+  --output-path qiime_exports
+
+#Predict functionality with MicFunPred and Picrust2
+MicFunPred_run_pipeline.py -i qiime_exports/ASV-table.tsv -r qiime_exports/dna-sequences.fasta -o micfunpred_output -t 8 --contrib -v
+picrust2_pipeline.py -i qiime_exports/feature-table.biom -s qiime_exports/dna-sequences.fasta -o picrust2_output -p 8
+
+#Export files
+tar -cvf PRJEB46806_KO_output.tar.gz picrust2_output/KO_metagenome_out/pred_metagenome_unstrat.tsv.gz micfunpred_output/KO_metagenome/KO_metagenome.tsv.gz
+
+# Code used to generate ASVs, taxonomic labelling, and function inference from PRJEB46806 amplicon data
 
 ```
 
@@ -409,8 +461,42 @@ Taxonomic profiles were generated from the deep-shotgun HQ decontaminated reads 
 
 ```bash
 # Amplicon data
+#Classify rep sequences against Greengenes2
+wget http://ftp.microbio.me/greengenes_release/2024.09/2024.09.taxonomy.asv.nwk.qza
+wget http://ftp.microbio.me/greengenes_release/2024.09/2024.09.backbone.full-length.fna.qza
+
+qiime greengenes2 non-v4-16s \
+  --i-table table.qza \
+  --i-sequences rep-seqs.qza \
+  --i-backbone 2024.09.backbone.full-length.fna.qza \
+  --o-mapped-table table_gg2.qza \
+  --o-representatives rep-seqs_gg2.qza
+
+qiime greengenes2 taxonomy-from-table \
+  --i-reference-taxonomy 2024.09.taxonomy.asv.nwk.qza \
+  --i-table table_gg2.qza \
+  --o-classification table_gg2_taxonomy.qza
+
+#Summarize and export files
+qiime tools export \
+  --input-path table_gg2.qza \
+  --output-path qiime_exports_gg2
+
+biom convert -i qiime_exports_gg2/feature-table.biom -o qiime_exports_gg2/ASV-table_gg2.tsv --to-tsv
+
+qiime tools export \
+  --input-path rep-seqs_gg2.qza \
+  --output-path qiime_exports_gg2
+
+qiime tools export \
+  --input-path table_gg2_taxonomy.qza \
+  --output-path qiime_exports_gg2
+
+#Export files
+tar -czvf PRJEB46806_gg2_output.tar.gz qiime_exports_gg2/
+
 # Processing ASVs table to add clean taxonomy labels. Removing GG2 (_[0-9]+) monophyletic identifiers in taxonomic ranks and aggregating names
-asv2taxo.py --asv_table ASV-table_gg2.tsv --names_table taxonomy.tsv 
+asv2taxo.py --asv_table qiime_exports_gg2/ASV-table_gg2.tsv --names_table taxonomy.tsv 
 
 # Transform amplicon count tables into relative abundance, removing singletons. Discarded singletons and doubletons: 16
 counts2relab.py --count_table amplicon_taxo.tsv --output relab_amplicon_taxo.tsv
