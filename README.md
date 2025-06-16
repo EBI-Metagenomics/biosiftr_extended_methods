@@ -326,6 +326,7 @@ Results were compared with other strategies for functional prediction:
 ### 1. Functional annotation and comparative metagenomics analysis
 The raw reads of 16S rRNA amplicon were processed using QIIME to generate ASVs and PICRUSt2 and MicFunPred were used to generate the functional profiles.
 This is an example for one of the three data sets (Red junglefowl; accession PRJEB46806). The code used for the two data sets is identical, except for the accession numbers (PRJDB11444, PRJEB74255) and the options "--p-trunc-len-f" and "--p-trunc-len-r" in the denoising step.
+Briefly, PRJEB46806 reads were trimmed to 230 bp on both fw and rv reads (as in this example), PRJDB11444 reads were trimmed to 280 bp on the fw read and 220 bp on the rv read, and PRJEB74255 reads were trimmed to 245 bp on the fw read and 220 bp on the rv read.
 
 ```bash
 # Code used to generate ASVs, taxonomic labelling, and function inference from PRJEB46806 amplicon data
